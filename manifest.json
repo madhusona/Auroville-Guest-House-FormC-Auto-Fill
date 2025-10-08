@@ -1,0 +1,32 @@
+{
+    "manifest_version": 3,
+    "name": "Auroville Guest House FormC Auto Fill",
+    "short_name": "Auroville Form C",
+    "version": "1",
+    "description": "Tool for Auroville Guest Houses to easily fill the online Form C (Indian FRRO) using JSON data for foreign guests.",
+    
+    "action": {
+      "default_icon": "icons/icon32.png",
+      "default_popup": "popup.html",
+      "default_title": "Auroville Guest House FormC Auto Fill"
+    },
+    
+    "permissions": [
+      "activeTab",
+      "storage",
+      "scripting" 
+    ],
+    
+    "host_permissions": [ 
+      "https://www.indianfrro.gov.in/*",
+      "https://aiis.auroville.org/*" 
+     
+    ],
+    
+    "icons": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"     
+    }
+  }

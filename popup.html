@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <style>
+        body {
+            /* Set a compact but usable size for the popup window */
+            width: 300px; 
+            min-height: 250px;
+            padding: 10px;
+            font-family: sans-serif;
+            text-align: center; /* Center the main content */
+        }
+        /* Style the textarea to fill the width */
+        #json {
+            width: 100%;
+            height: 150px; /* Ample height for JSON paste */
+            box-sizing: border-box; 
+            padding: 5px;
+            margin-bottom: 10px;
+            resize: none; /* Prevent resizing by the user */
+            font-family: monospace; /* Easier to read JSON */
+        }
+        #button_send_json {
+            width: 100%;
+            padding: 10px;
+            background-color: #006600; 
+            color: white;
+            border: none;
+            font-size: 1.1em;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+    <h2>Auroville Guest House FormC Autofill</h2>
+    <h3>Official Tool for Auroville Foundation</h3>
+    
+    <h3>Copy/paste the Guest's JSON data here:</h3>
+    <textarea id="json" autofocus placeholder="Paste JSON data..."></textarea>
+    
+    <button id="button_send_json">FILL FORM NOW</button>
+    <h4 style="color: #006600;">
+        For support or inquiries, please contact:
+        <a href="mailto:madusudhanan_avf@auroville.org.in">madusudhanan_avf@auroville.org.in</a>
+    </h4>
+    <script src="popup.js"></script>
+</body>
+
+</html>
