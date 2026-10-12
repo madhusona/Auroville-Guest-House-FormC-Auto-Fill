@@ -1,114 +1,155 @@
-// inject.js (Manifest V3 - Unchanged from V2)
+// inject.js - v2 (new Form III portal, Angular Material)
+// Defines window.formIIIFill(data, photo) in the extension's isolated world.
+// popup.js injects this file, then calls the function with the guest JSON.
 // ------------------------------------------------------------------
 
-//region: boilerplate
-// This helps avoid conflicts in case we inject 
-// this script on the same page multiple times
-// without reloading.
-var injected = injected || (function () {
+(() => {
+    if (window.formIIIFill) return;
 
-    // An object that will contain the "methods"
-    // we can use from our event script.
-    var methods = {};
+    // Old Form C keys -> new Form III keys, so old JSON still partly works.
+    const ALIASES = {
+        applicant_givenname: 'given_name',
+        applicant_surname: 'surname',
+        applicant_sex: 'gender',
+        applicant_nationality: 'nationality',
+        applicant_dob: 'dob',
+        applicant_contactnoinindia: 'phnnuminind',
+        applicant_mcontactnoinindia: 'phnnuminind',
+        applicant_email: 'emailId',
+        applicant_remark: 'remark',
+        applicant_passpno: 'passnum',
+        applicant_visano: 'visanum',
+        applicant_visatype: 'visatype',
+        applicant_visa_subtype_code: 'visasubtype',
+        applicant_arrivedfromplace: 'arrivedFromPlace',
+        applicant_doarrivalhotel: 'dateOfArrivalInHotel',
+        applicant_timeoarrivalhotel: 'timeOfArrivalInHotel',
+        applicant_purpovisit: 'purposeOfVisit',
+        applicant_intnddurhotel: 'durationofstay',
+        applicant_special_category: 'spl_category_code'
+    };
 
+    // Dropdowns, in the order they must be set (subtype loads after visa type).
+    const SELECTS = ['gender', 'nationality', 'spl_category_code', 'visatype', 'visasubtype', 'purposeOfVisit'];
 
-    // This tells the script to listen for
-    // messages from our extension.
-    chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
-        var data = {};
-        // If the method the extension has requested
-        // exists, call it and assign its response
-        // to data.
-        if (methods.hasOwnProperty(request.method))
-            data = methods[request.method]();
-        // Send the response back to our extension.
-        sendResponse({ data: data });
-        return true;
-    });
-    //endregion boilerplate
+    // Calculated by the site - never touch.
+    const SKIP = ['expectedCheckoutDate'];
 
+    const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+    const norm = (s) => String(s).trim().toUpperCase().replace(/\s+/g, ' ');
 
-    //the method to read json and fill the form
-    methods.fill_form_now = function () {
-        //get the json through storage
-        try {
-            chrome.storage.local.get('fill_form_json',
-                function (data) {
-                    var jsonObj = JSON.parse(data.fill_form_json);
-                    for (var prop in jsonObj) {
-                        assignValueToInputs(prop, jsonObj[prop]);
-                    }
-                }
-            );
-        }
-        catch (err) {
-            alert(err.message);
-        }
-        return true;
+    // Is the element on the step that is currently shown?
+    function onVisibleStep(el) {
+        const panel = el.closest('.mat-horizontal-stepper-content');
+        return !panel || panel.getAttribute('aria-expanded') === 'true';
     }
 
-    function assignValueToInputs(inputName, newText) {
-        if (typeof newText === 'string') {
-            //input is text, checkbox, radio
-            Array.from(document.querySelectorAll('input')).forEach(el => {
-                if (el.name == inputName) {
-                    if (el.type == "text") {
-                        el.value = newText;
-                    }
-                    else if (el.type == "radio") {
-                        setCheckedValue(el, newText);
-                    }
-                    else if (el.type == "checkbox") {
-                        if (newText == "true") {
-                            el.checked = true;
-                        } else {
-                            el.checked = false;
-                        }
-                    }
-                }
-            });
-            Array.from(document.querySelectorAll('textarea')).forEach(el => {
-                if (el.name == inputName) {
-                    el.value = newText;
-                }
-            });
-            Array.from(document.querySelectorAll('select')).forEach(el => {
-                if (el.name == inputName) {
-                    var val = newText;
-                    var opts = el.options;
-                    for (var opt, j = 0; opt = opts[j]; j++) {
-                        if (opt.value == val) {
-                            //alert(opt.value);
-                            el.selectedIndex = j;
-                            break;
-                        }
-                    }
-                }
-            });
-        }
+    function fire(el, type) {
+        el.dispatchEvent(new Event(type, { bubbles: true }));
     }
 
-    // set the radio button with the given value as being checked
-    // do nothing if there are no radio buttons
-    // if the given value does not exist, all the radio buttons
-    // are reset to unchecked
-    function setCheckedValue(radioObj, newValue) {
-        if (!radioObj)
-            return;
-        var radioLength = radioObj.length;
-        if (radioLength == undefined) {
-            radioObj.checked = (radioObj.value == newValue.toString());
-            return;
-        }
-        for (var i = 0; i < radioLength; i++) {
-            radioObj[i].checked = false;
-            if (radioObj[i].value == newValue.toString()) {
-                radioObj[i].checked = true;
-            }
-        }
+    function setText(el, value) {
+        el.removeAttribute('readonly');
+        el.value = value;
+        fire(el, 'input');
+        fire(el, 'change');
+        fire(el, 'blur');
     }
 
-    //region: boilerplate
-    return true;
+    function closePanel(el) {
+        el.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', keyCode: 27, bubbles: true }));
+        const backdrop = document.querySelector('.cdk-overlay-backdrop');
+        if (backdrop) backdrop.click();
+    }
+
+    async function setSelect(el, value) {
+        const wanted = norm(value);
+        const current = el.querySelector('.mat-select-value-text');
+        if (current && norm(current.textContent) === wanted) return 'ok';
+
+        (el.querySelector('.mat-select-trigger') || el).click();
+
+        let opts = [];
+        for (let i = 0; i < 30; i++) {            // wait up to 3 s for the list
+            await sleep(100);
+            opts = Array.from(document.querySelectorAll('.cdk-overlay-container mat-option'));
+            if (opts.length) break;
+        }
+        if (!opts.length) { closePanel(el); return 'no options'; }
+
+        const text = (o) => norm(o.textContent);
+        const opt = opts.find((o) => text(o) === wanted)
+            || opts.find((o) => text(o).startsWith(wanted))
+            || opts.find((o) => text(o).includes(wanted));
+
+        if (!opt) { closePanel(el); return 'no match for "' + value + '"'; }
+
+        opt.scrollIntoView({ block: 'nearest' });
+        opt.click();
+        await sleep(400);
+        return 'ok';
+    }
+
+    function setPhoto(photo) {
+        const input = document.getElementById('imageUpload');
+        if (!input) return 'upload box not found';
+        const [meta, b64] = photo.dataUrl.split(',');
+        const type = (meta.match(/data:(.*?);/) || [])[1] || 'image/jpeg';
+        const bin = atob(b64);
+        const bytes = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+        const file = new File([bytes], photo.name || 'photo.jpg', { type });
+        const dt = new DataTransfer();
+        dt.items.add(file);
+        input.files = dt.files;
+        fire(input, 'change');
+        return 'ok';
+    }
+
+    window.formIIIFill = async function (raw, photo) {
+        // Normalise keys (new keys win over old aliases).
+        const data = {};
+        const entries = Object.entries(raw).filter(([, v]) => v !== null && v !== undefined && v !== '');
+        for (const [k, v] of entries) {
+            if (!(k in ALIASES)) data[k] = String(v);
+        }
+        for (const [k, v] of entries) {
+            const key = ALIASES[k];
+            if (key && !(key in data)) data[key] = String(v);
+        }
+
+        const report = { filled: [], skipped: [], failed: [] };
+
+        // 1. Text, date and time fields (all steps - harmless to refill).
+        for (const [key, value] of Object.entries(data)) {
+            if (SELECTS.includes(key) || SKIP.includes(key)) continue;
+            const el = document.querySelector('input[formcontrolname="' + key + '"], textarea[formcontrolname="' + key + '"]');
+            if (!el) continue;
+            if (el.disabled) continue;
+            setText(el, value);
+            report.filled.push(key);
+        }
+
+        // 2. Dropdowns - only on the step that is showing.
+        for (const key of SELECTS) {
+            if (!(key in data)) continue;
+            const el = document.querySelector('mat-select[formcontrolname="' + key + '"]');
+            if (!el) continue;
+            if (!onVisibleStep(el)) { report.skipped.push(key); continue; }
+            const res = await setSelect(el, data[key]);
+            if (res === 'ok') report.filled.push(key);
+            else report.failed.push(key + ': ' + res);
+            if (key === 'visatype') await sleep(800);   // let subtypes load
+        }
+
+        // 3. Photo - only when the Photo Upload step is showing.
+        const upload = document.getElementById('imageUpload');
+        if (photo && upload && onVisibleStep(upload)) {
+            const res = setPhoto(photo);
+            if (res === 'ok') report.filled.push('photo');
+            else report.failed.push('photo: ' + res);
+        }
+
+        return report;
+    };
 })();
-//endregion boilerplate

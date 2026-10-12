@@ -2,45 +2,59 @@
 <html>
 
 <head>
+    <meta charset="utf-8">
     <style>
         body {
-            /* Set a compact but usable size for the popup window */
-            width: 300px; 
-            min-height: 250px;
+            width: 320px;
             padding: 10px;
             font-family: sans-serif;
-            text-align: center; /* Center the main content */
+            text-align: center;
         }
-        /* Style the textarea to fill the width */
+        h2 { font-size: 1.1em; margin: 4px 0; }
+        h3 { font-size: 0.9em; margin: 6px 0; font-weight: normal; }
         #json {
             width: 100%;
-            height: 150px; /* Ample height for JSON paste */
-            box-sizing: border-box; 
+            height: 150px;
+            box-sizing: border-box;
             padding: 5px;
-            margin-bottom: 10px;
-            resize: none; /* Prevent resizing by the user */
-            font-family: monospace; /* Easier to read JSON */
+            margin-bottom: 8px;
+            resize: none;
+            font-family: monospace;
         }
-        #button_send_json {
+        .photo-row { text-align: left; font-size: 0.85em; margin-bottom: 8px; }
+        #photo_name { color: #555; display: block; margin-top: 3px; }
+        button {
             width: 100%;
             padding: 10px;
-            background-color: #006600; 
-            color: white;
             border: none;
-            font-size: 1.1em;
+            font-size: 1.05em;
             cursor: pointer;
         }
+        #button_send_json { background-color: #006600; color: white; }
+        #button_clear { background: none; color: #555; font-size: 0.85em; padding: 6px; }
+        #status { white-space: pre-wrap; text-align: left; font-size: 0.85em; margin: 8px 0; }
+        .help { font-size: 0.8em; color: #444; text-align: left; }
     </style>
 </head>
 
 <body>
-    <h2>Auroville Guest House FormC Autofill</h2>
+    <h2>Auroville Guest House Form III Autofill</h2>
     <h3>Official Tool for Auroville Foundation</h3>
-    
-    <h3>Copy/paste the Guest's JSON data here:</h3>
+
+    <h3>Paste the guest's JSON data:</h3>
     <textarea id="json" autofocus placeholder="Paste JSON data..."></textarea>
-    
-    <button id="button_send_json">FILL FORM NOW</button>
+
+    <div class="photo-row">
+        Guest photo (JPEG, optional):
+        <input type="file" id="photo" accept=".jpg,.jpeg,.png">
+        <span id="photo_name"></span>
+    </div>
+
+    <button id="button_send_json">FILL THIS STEP</button>
+    <div id="status"></div>
+    <p class="help">Click <b>FILL THIS STEP</b> on each step (1, 2 and 3), check the values, then press <b>Next</b> on the form.</p>
+    <button id="button_clear">Clear guest data</button>
+
     <h4 style="color: #006600;">
         For support or inquiries, please contact:
         <a href="mailto:madusudhanan_avf@auroville.org.in">madusudhanan_avf@auroville.org.in</a>

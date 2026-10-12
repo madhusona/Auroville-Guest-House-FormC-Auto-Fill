@@ -1,0 +1,21 @@
+{
+  "given_name": "KATHARINA",
+  "surname": "POTOCKA",
+  "gender": "Female",
+  "nationality": "GERMANY",
+  "dob": "28/10/1973",
+  "phnnuminind": "8300493058",
+  "emailId": "guest@example.com",
+  "spl_category_code": "Others",
+  "remark": "",
+  "passnum": "C4W01H1Y5",
+  "visanum": "VK3276850",
+  "visatype": "ENTRY VISA",
+  "visasubtype": "X-2",
+  "arrivedFromPlace": "CHENNAI",
+  "dateOfArrivalInHotel": "06/07/2022",
+  "timeOfArrivalInHotel": "09:00",
+  "purposeOfVisit": "Tourism",
+  "previousPlaceStay": "CHENNAI",
+  "durationofstay": "365"
+}
